@@ -7,10 +7,11 @@ WORKDIR /
 
 # Install dependencies
 RUN pip install --no-cache-dir \
-    runpod \
     vllm==0.6.6 \
     transformers \
-    huggingface_hub
+    huggingface_hub \
+    fastapi \
+    uvicorn
 
 # Set Hugging Face cache directory
 ENV HF_HOME=/runpod-volume/huggingface
