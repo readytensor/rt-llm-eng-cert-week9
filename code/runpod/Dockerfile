@@ -16,7 +16,7 @@ RUN pip install --no-cache-dir \
 ENV HF_HOME=/runpod-volume/huggingface
 
 # Copy handler
-COPY handler.py /handler.py
+COPY code/runpod/handler.py /handler.py
 
 # Start the worker
 CMD ["python3", "-u", "/handler.py"]
