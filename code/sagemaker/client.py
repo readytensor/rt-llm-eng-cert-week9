@@ -35,7 +35,7 @@ class SummarizerClient:
 
 
 # --- Usage ---
-client = SummarizerClient(endpoint_name="llama-vllm-hf-endpoint")
+client = SummarizerClient(endpoint_name="llama-vllm-endpoint")
 
 text = """
 Victoria: God I'm really broke, I spent way to much this month

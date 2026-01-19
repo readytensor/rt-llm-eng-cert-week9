@@ -6,7 +6,7 @@ from transformers import AutoTokenizer
 
 load_dotenv(override=True)
 
-tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.2-1B-Instruct")
+tokenizer = AutoTokenizer.from_pretrained("moo3030/Llama-3.2-1B-Summarizer-merged")
 
 
 bedrock = boto3.client(
@@ -32,7 +32,7 @@ prompt_template = tokenizer.apply_chat_template(
 )
 
 response = bedrock.invoke_model(
-    modelId="arn:aws:bedrock:us-east-1:224671574366:imported-model/vti0vuvpxpfz",
+    modelId="MODEL_ARN",
     contentType="application/json",
     body=json.dumps(
         {
