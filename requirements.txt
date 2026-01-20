@@ -1,0 +1,7 @@
+modal
+boto3
+openai
+requests
+transformers
+python-dotenv
+

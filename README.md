@@ -9,7 +9,6 @@ This repository contains code examples for deploying LLMs to production on vario
 - **Runpod** - On-demand GPU inference with custom handlers
 - **SageMaker** - Enterprise ML deployment on AWS
 - **Bedrock** - Managed foundation models (zero infrastructure)
-- **ECS** - Container-based deployment with full control
 
 ---
 
@@ -17,7 +16,8 @@ This repository contains code examples for deploying LLMs to production on vario
 
 - Python 3.10+
 - Modal account (free tier available)
-- AWS account with configured credentials (for SageMaker, Bedrock, ECS)
+- Runpod account (for Runpod deployment)
+- AWS account with configured credentials (for SageMaker, Bedrock)
 - Hugging Face account with accepted Llama license
 
 ---
@@ -44,22 +44,10 @@ source venv/bin/activate
 
 ### 2. Dependency Installation
 
-**For Modal deployment:**
+Install all dependencies:
 
 ```bash
-pip install modal
-```
-
-**For AWS deployments:**
-
-```bash
-pip install boto3
-```
-
-**For OpenAI-compatible clients:**
-
-```bash
-pip install openai requests
+pip install -r requirements.txt
 ```
 
 ### 3. Platform Authentication
@@ -81,6 +69,17 @@ aws configure
 
 ```bash
 huggingface-cli login
+```
+
+### 4. Environment Variables
+
+Create a `.env` file for Runpod and Bedrock clients:
+
+```bash
+RUNPOD_API_KEY=your-runpod-api-key
+RUNPOD_ENDPOINT_ID=your-endpoint-id
+AWS_ACCESS_KEY_ID=your-aws-access-key
+AWS_SECRET_ACCESS_KEY=your-aws-secret-key
 ```
 
 ---
@@ -135,6 +134,25 @@ modal deploy openai_server.py
 python client_openai.py
 ```
 
+### Runpod Serverless
+
+Client for Runpod's serverless vLLM endpoints with OpenAI-compatible API.
+
+**Test with client:**
+
+```bash
+cd code/runpod
+
+# Chat with model
+python client_openai.py --prompt "What is serverless computing?"
+
+# Streaming response
+python client_openai.py --stream --prompt "Write a haiku"
+
+# List available models
+python client_openai.py --list-models
+```
+
 ### SageMaker Deployment
 
 Deploy vLLM on AWS SageMaker using pre-built containers.
@@ -143,7 +161,7 @@ Deploy vLLM on AWS SageMaker using pre-built containers.
 
 ```bash
 aws sagemaker create-model \
-    --model-name llama-vllm-hf-adapters \
+    --model-name llama-vllm-model \
     --primary-container '{
         "Image": "763104351884.dkr.ecr.us-east-1.amazonaws.com/vllm:0.11-gpu-py312-cu129-ubuntu22.04-sagemaker-v1",
         "Environment": {
@@ -158,10 +176,10 @@ aws sagemaker create-model \
 
 ```bash
 aws sagemaker create-endpoint-config \
-    --endpoint-config-name llama-vllm-hf-config \
+    --endpoint-config-name llama-vllm-config \
     --production-variants "[{
         \"VariantName\": \"AllTraffic\",
-        \"ModelName\": \"llama-vllm-hf-adapters\",
+        \"ModelName\": \"llama-vllm-model\",
         \"InstanceType\": \"ml.g6.2xlarge\",
         \"InitialInstanceCount\": 1,
         \"ContainerStartupHealthCheckTimeoutInSeconds\": 900
@@ -172,8 +190,8 @@ aws sagemaker create-endpoint-config \
 
 ```bash
 aws sagemaker create-endpoint \
-    --endpoint-name llama-vllm-hf-endpoint \
-    --endpoint-config-name llama-vllm-hf-config
+    --endpoint-name llama-vllm-endpoint \
+    --endpoint-config-name llama-vllm-config
 ```
 
 **Test with client:**
@@ -185,9 +203,19 @@ python code/sagemaker/client.py
 **Cleanup (important!):**
 
 ```bash
-aws sagemaker delete-endpoint --endpoint-name llama-vllm-hf-endpoint
-aws sagemaker delete-endpoint-config --endpoint-config-name llama-vllm-hf-config
-aws sagemaker delete-model --model-name llama-vllm-hf-adapters
+aws sagemaker delete-endpoint --endpoint-name llama-vllm-endpoint
+aws sagemaker delete-endpoint-config --endpoint-config-name llama-vllm-config
+aws sagemaker delete-model --model-name llama-vllm-model
+```
+
+### Bedrock Deployment
+
+Use AWS Bedrock with custom imported models.
+
+**Test with client:**
+
+```bash
+python code/bedrock/bedrock_client.py
 ```
 
 ---
@@ -196,11 +224,12 @@ aws sagemaker delete-model --model-name llama-vllm-hf-adapters
 
 | Lesson | Topic | Key Concepts |
 |--------|-------|--------------|
+| Overview | Unit Introduction | Platform comparison, decision framework |
 | 1 | Modal | Serverless GPU, pay-per-second, cold start optimization |
-| 2 | Runpod | Custom handlers, worker scaling, async processing |
-| 3 | SageMaker | Enterprise deployment, IAM, VPC, pre-built containers |
-| 4 | Bedrock | Managed models, per-token pricing, guardrails |
-| 5 | ECS | Container deployment, full control, Spot instances |
+| 2 | Runpod | Custom handlers, worker scaling, OpenAI-compatible API |
+| 3 | SageMaker | Enterprise deployment, IAM, VPC, pre-built vLLM containers |
+| 4 | Bedrock | Managed models, custom model import, per-token pricing |
+| 5 | On-Premise | Private cloud, Kubernetes, cost analysis, security |
 
 ---
 
@@ -214,13 +243,20 @@ rt-llm-eng-cert-week9/
 │   │   ├── client.py           # Test client for Modal
 │   │   ├── openai_server.py    # Modal with vLLM serve
 │   │   └── client_openai.py    # OpenAI SDK client
-│   └── sagemaker/
-│       └── client.py           # SageMaker endpoint client
+│   ├── runpod/
+│   │   └── client_openai.py    # Runpod OpenAI-compatible client
+│   ├── sagemaker/
+│   │   └── client.py           # SageMaker endpoint client
+│   └── bedrock/
+│       └── bedrock_client.py   # Bedrock client
 ├── lessons/
 │   ├── overview.md             # Unit overview and decision framework
 │   ├── lesson1-modal.md        # Modal deployment guide
-│   └── lesson3-sagemaker.md    # SageMaker deployment guide
-├── .gitignore
+│   ├── lesson2-runpod.md       # Runpod deployment guide
+│   ├── lesson3-sagemaker.md    # SageMaker deployment guide
+│   ├── lesson4-bedrock.md      # Bedrock deployment guide
+│   └── lesson5-onpremise.md    # On-premise deployment guide
+├── requirements.txt            # Python dependencies
 └── README.md
 ```
 
@@ -234,7 +270,6 @@ rt-llm-eng-cert-week9/
 | **Runpod** | Automatic | Medium | Per-second GPU | Configurable |
 | **SageMaker** | Policy-based | Medium-High | Per-hour instance | Warm pools |
 | **Bedrock** | Automatic | Low | Per-token | None |
-| **ECS** | Policy-based | High | Per-hour instance | Depends on setup |
 
 ---
 
@@ -254,11 +289,6 @@ rt-llm-eng-cert-week9/
 - You want zero infrastructure management
 - Available models meet your needs
 - You prefer per-token pricing
-
-**Choose ECS if:**
-- You need full control over infrastructure
-- You have container/Kubernetes expertise
-- You want to optimize costs with Spot instances
 
 ---
 
