@@ -4,4 +4,4 @@ openai
 requests
 transformers
 python-dotenv
-
+sse_starlette
